@@ -8,8 +8,7 @@
 #include <signal.h>
 
 void signal_reaction(int sig_id){
-    // std::cerr  << "GEN TERMINATED" << std::endl;
-    // fflush(stdout);
+
     char msg[]= "GEN TERMINATED\n";
     write(STDERR_FILENO, msg, sizeof(msg)-1);
     _exit (0);
@@ -17,12 +16,10 @@ void signal_reaction(int sig_id){
 
 int main(int argc, char *argv[]) {
     pid_t gen, nsd;
-    // int status;
-    // pid_t pid = wait (&status);
-
+    
     int fd [2];
     if (pipe(fd) == -1){
-        perror("pipe");
+        std::cerr << "ERROR" << std::endl;
         return 2;
     }
     gen = fork(); 
@@ -50,8 +47,7 @@ int main(int argc, char *argv[]) {
 
     nsd = fork();
     if (nsd < 0 ){
-        std::cerr << "ERROR\n";
-        fflush(stdout);
+        std::cerr << "ERROR" << std::endl;
         return 2;
     }
 
@@ -60,22 +56,22 @@ int main(int argc, char *argv[]) {
 
         close(fd[0]);
         close(fd[1]);
-        // char buf [128];
         
         execl("./nsd", "nsd", NULL);
-        // perror("nsd: execl");
         exit(2);
     }
- 
+     
+    // CLosign the parent now
     close(fd[0]);
     close(fd[1]);
     sleep(5);
 
-    if(kill(gen, SIGTERM) == -1) return 2;
-    // kill(nsd, SIGTERM);
     int status;
     bool error_found = false;
     int k = 2;
+
+    if(kill(gen, SIGTERM) == -1) return 2;
+    
     do{
        pid_t w = wait(&status);
        if(w == -1 ){perror("wait"); return 2;}
@@ -88,11 +84,6 @@ int main(int argc, char *argv[]) {
 
     if(!error_found){ std::cout << "OK\n";}
     else {std::cout << "ERROR\n"; fflush(stdout);}
-
-
-    // CLosign the parent now
-  
-    
 
     return error_found ? 1 : 0;
 }
